@@ -1,0 +1,1651 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0c0f">
+<meta name="referrer" content="no-referrer">
+<meta name="format-detection" content="telephone=no">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="TV Remote">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="description" content="Phone remote for the Samsung TV on the home Wi-Fi.">
+<title>TV Remote</title>
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+<link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+<!--
+  TV Remote for a Samsung UA60KU7000 (2016 Tizen) – static page, no libraries, no server.
+  Created by Mohamed AlSaegh. Edit only the CFG block at the top of the script below.
+-->
+<style>
+  :root {
+    --bg: #0a0c0f;
+    --surface: #12151a;
+    --surface-2: #1a1e24;
+    --line: #2b3139;
+    --text: #eef1f4;
+    --muted: #a7b0ba;
+    --btn: #252a31;
+    --btn-2: #2f353e;
+    --btn-press: #3c4450;
+    --focus: #8ab4ff;
+    --accent: #4c9aff;
+    --red: #e5484d;
+    --red-press: #c53a3f;
+    --amber: #f5a524;
+    --green: #2fb36d;
+  }
+  * { box-sizing: border-box; }
+  [hidden] { display: none !important; }
+  html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; background: var(--bg); }
+  body {
+    margin: 0; min-height: 100vh; background: var(--bg); color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    font-size: 16px; line-height: 1.4;
+    padding: 0;
+    padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
+  }
+  body.modal-open { overflow: hidden; }
+  a { color: #8ab4ff; }
+  button { font: inherit; color: inherit; }
+  svg { display: block; pointer-events: none; }
+
+  /* visible focus everywhere; old Safari ignores the :not() rule and keeps the outline */
+  button:focus, a:focus, input:focus, summary:focus, pre:focus { outline: 3px solid var(--focus); outline-offset: 2px; }
+  button:focus:not(:focus-visible), a:focus:not(:focus-visible), summary:focus:not(:focus-visible) { outline: none; }
+
+  .sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; border: 0; }
+
+  .app { max-width: 440px; margin: 0 auto; padding: 8px 12px 20px; }
+
+  /* ---------- top bar ---------- */
+  .topbar { display: flex; align-items: center; padding: 4px 0 10px; }
+  .brand { font-weight: 700; font-size: 15px; letter-spacing: .02em; color: var(--muted); margin-right: auto; white-space: nowrap; }
+  .pill {
+    display: inline-flex; align-items: center; min-height: 40px; padding: 6px 12px 6px 10px; margin-left: 8px;
+    border-radius: 999px; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer;
+    font-size: 14px; font-weight: 600; max-width: 62vw; -webkit-tap-highlight-color: transparent;
+  }
+  .pill .dot { flex: 0 0 auto; width: 10px; height: 10px; border-radius: 50%; margin-right: 8px; background: var(--red); box-shadow: 0 0 0 3px rgba(229,72,77,.2); }
+  .pill.amber .dot { background: var(--amber); box-shadow: 0 0 0 3px rgba(245,165,36,.22); animation: pulse 1.2s ease-in-out infinite; }
+  .pill.green .dot { background: var(--green); box-shadow: 0 0 0 3px rgba(47,179,109,.22); }
+  .pill .ptext { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  @keyframes pulse { 50% { opacity: .35; } }
+  .icon-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; margin-left: 8px;
+    border-radius: 50%; border: 1px solid var(--line); background: var(--surface-2); cursor: pointer; -webkit-tap-highlight-color: transparent;
+  }
+  .icon-btn svg { width: 22px; height: 22px; }
+
+  /* ---------- banner ---------- */
+  .banner {
+    margin: 0 0 12px; padding: 12px 14px; border-radius: 14px; background: var(--surface-2);
+    border: 1px solid var(--line); border-left: 5px solid var(--red);
+  }
+  .banner.warn { border-left-color: var(--amber); }
+  .banner.info { border-left-color: var(--accent); }
+  .banner h2 { margin: 0 0 6px; font-size: 17px; }
+  .banner p { margin: 0 0 6px; font-size: 15px; }
+  .banner .steps { margin: 8px 0 4px; padding-left: 22px; font-size: 15px; }
+  .banner .steps li { margin: 2px 0; }
+  .actions { display: flex; flex-wrap: wrap; margin: 6px -4px 0; }
+  .actions .tbtn { margin: 4px; }
+  .contact { margin: 8px 0 0 !important; font-size: 14px !important; color: var(--muted); }
+  .addrbox { margin: 8px 0 2px; }
+  .addrbox textarea { display: block; width: 100%; margin: 0 0 8px; resize: none; overflow: hidden; word-break: break-all; }
+
+  /* text buttons */
+  .tbtn {
+    display: inline-flex; align-items: center; justify-content: center; min-height: 44px; padding: 8px 16px;
+    border-radius: 12px; border: 1px solid var(--line); background: var(--btn); color: var(--text);
+    font-weight: 600; font-size: 15px; cursor: pointer; text-decoration: none; -webkit-tap-highlight-color: transparent;
+  }
+  .tbtn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .tbtn:active { filter: brightness(1.15); }
+
+  input[type=text] {
+    font: inherit; font-size: 16px; color: var(--text); background: #0d1014; border: 1px solid var(--line);
+    border-radius: 12px; padding: 10px 12px; min-height: 44px; width: 100%;
+  }
+  textarea.addr {
+    font: 16px/1.35 ui-monospace, Menlo, Consolas, monospace; color: var(--text); background: #0d1014;
+    border: 1px solid var(--line); border-radius: 12px; padding: 10px 12px;
+  }
+
+  /* ---------- the remote ---------- */
+  .remote {
+    position: relative; width: 100%; max-width: 300px; margin: 4px auto 0; padding: 22px 18px 18px;
+    border-radius: 42px 42px 60px 60px; border: 1px solid #2c323b;
+    background: #1b1f25;
+    background: linear-gradient(180deg, #2a2f37 0%, #1d2127 38%, #15181d 100%);
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), inset 0 -2px 0 rgba(0,0,0,.5), 0 18px 40px rgba(0,0,0,.55);
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  .row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .btn {
+    display: inline-flex; align-items: center; justify-content: center; border: 0; padding: 0; cursor: pointer;
+    background: var(--btn); color: var(--text); font-weight: 700; letter-spacing: .05em;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 6px rgba(0,0,0,.45);
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent;
+    -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+    -webkit-transition: transform .06s, background-color .1s; transition: transform .06s, background-color .1s;
+  }
+  .btn:active, .btn.pressed { background: var(--btn-press); -webkit-transform: scale(.95); transform: scale(.95); }
+  .round { width: 58px; height: 58px; border-radius: 50%; }
+  .round svg { width: 26px; height: 26px; }
+  .power { width: 58px; height: 58px; border-radius: 50%; background: var(--red); color: #fff; }
+  .power:active, .power.pressed { background: var(--red-press); }
+  .power svg { width: 26px; height: 26px; }
+  .power.armed { box-shadow: 0 0 0 4px rgba(229,72,77,.45), 0 0 18px rgba(229,72,77,.6); animation: pulse .7s ease-in-out infinite; }
+  .chip { min-width: 86px; height: 40px; padding: 0 14px; border-radius: 20px; font-size: 13px; }
+
+  .dpad {
+    position: relative; width: 224px; height: 224px; margin: 8px auto 18px; border-radius: 50%;
+    background: #22262d;
+    background: radial-gradient(circle at 50% 38%, #2d323a 0%, #1f2329 72%);
+    box-shadow: 0 0 0 2px #323843, 0 8px 18px rgba(0,0,0,.5), inset 0 1px 0 rgba(255,255,255,.07);
+  }
+  .dp {
+    position: absolute; display: flex; align-items: center; justify-content: center; border: 0; padding: 0;
+    background: transparent; color: var(--text); cursor: pointer; touch-action: none;
+    -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  .dp svg { width: 30px; height: 30px; }
+  .dp.up { left: 30%; width: 40%; top: 0; height: 31%; border-radius: 50% 50% 14px 14px / 70% 70% 14px 14px; }
+  .dp.down { left: 30%; width: 40%; bottom: 0; height: 31%; border-radius: 14px 14px 50% 50% / 14px 14px 70% 70%; }
+  .dp.left { top: 30%; height: 40%; left: 0; width: 31%; border-radius: 70% 14px 14px 70% / 50% 14px 14px 50%; }
+  .dp.right { top: 30%; height: 40%; right: 0; width: 31%; border-radius: 14px 70% 70% 14px / 14px 50% 50% 14px; }
+  .dp.up:active, .dp.down:active, .dp.left:active, .dp.right:active, .dp.pressed { background: rgba(255,255,255,.10); }
+  .dp.ok {
+    left: 30%; top: 30%; width: 40%; height: 40%; z-index: 2; border-radius: 50%; touch-action: manipulation;
+    background: var(--btn-2); font-weight: 800; font-size: 17px; letter-spacing: .06em;
+    box-shadow: inset 0 1px 0 rgba(255,255,255,.1), 0 3px 10px rgba(0,0,0,.55);
+  }
+  .dp.ok:active, .dp.ok.pressed { background: var(--btn-press); }
+
+  .rockers { display: flex; align-items: center; justify-content: space-between; margin: 2px 4px 16px; }
+  .rocker {
+    display: flex; flex-direction: column; width: 64px; height: 160px; border-radius: 32px; overflow: hidden;
+    background: var(--btn); box-shadow: inset 0 1px 0 rgba(255,255,255,.08), 0 2px 8px rgba(0,0,0,.5);
+  }
+  .rocker button {
+    flex: 1 1 0; display: flex; align-items: center; justify-content: center; border: 0; padding: 0;
+    background: transparent; color: var(--text); cursor: pointer; touch-action: none;
+    -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; -webkit-touch-callout: none;
+  }
+  .rocker button svg { width: 26px; height: 26px; }
+  .rocker button:active, .rocker button.pressed { background: rgba(255,255,255,.12); }
+  .rocker .lbl { text-align: center; font-size: 11px; font-weight: 700; letter-spacing: .14em; color: var(--muted); padding: 2px 0 2px .14em; }
+  .logo { text-align: center; font-weight: 800; font-size: 13px; letter-spacing: .34em; padding-left: .34em; color: #8e97a3; margin-top: 2px; }
+
+  .foot { text-align: center; color: var(--muted); font-size: 13px; margin-top: 14px; }
+  .foot a { color: var(--muted); }
+  .linkbtn { background: none; border: 0; padding: 8px; color: var(--muted); text-decoration: underline; cursor: pointer; font-size: 13px; }
+
+  /* ---------- sheets ---------- */
+  .sheet {
+    position: fixed; left: 0; right: 0; top: 0; bottom: 0; z-index: 50; display: flex; align-items: flex-end; justify-content: center;
+    background: rgba(0,0,0,.6);
+  }
+  .panel {
+    width: 100%; max-width: 560px; max-height: 92vh; overflow-y: auto; -webkit-overflow-scrolling: touch;
+    background: var(--surface); border: 1px solid var(--line); border-bottom: 0; border-radius: 20px 20px 0 0;
+    padding: 12px 16px 20px;
+    padding-bottom: calc(20px + env(safe-area-inset-bottom));
+  }
+  .sheet-head { display: flex; align-items: center; justify-content: space-between; position: -webkit-sticky; position: sticky; top: -12px; background: var(--surface); padding: 6px 0 8px; z-index: 1; }
+  .sheet-head h2 { margin: 0; font-size: 19px; }
+  .sec { margin: 16px 0 8px; font-size: 13px; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); }
+  .grid { display: grid; grid-gap: 10px; gap: 10px; }
+  .g2 { grid-template-columns: 1fr 1fr; }
+  .g3 { grid-template-columns: 1fr 1fr 1fr; }
+  .g4 { grid-template-columns: 1fr 1fr 1fr 1fr; }
+  .g5 { grid-template-columns: 1fr 1fr 1fr 1fr 1fr; }
+  .key {
+    min-height: 50px; border-radius: 12px; border: 1px solid var(--line); background: var(--btn); color: var(--text);
+    font-weight: 700; font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px;
+    touch-action: manipulation; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none;
+  }
+  .key.rep { touch-action: none; }
+  .key svg { width: 24px; height: 24px; }
+  .key:active, .key.pressed { background: var(--btn-press); }
+  .key.small { font-size: 13px; letter-spacing: .02em; }
+  .c-red { background: #b3261e; border-color: #b3261e; color: #fff; }
+  .c-green { background: #1e7d3a; border-color: #1e7d3a; color: #fff; }
+  .c-yellow { background: #e3b505; border-color: #e3b505; color: #1a1a1a; }
+  .c-blue { background: #1f5fbf; border-color: #1f5fbf; color: #fff; }
+  .c-red:active, .c-green:active, .c-yellow:active, .c-blue:active, .c-red.pressed, .c-green.pressed, .c-yellow.pressed, .c-blue.pressed { filter: brightness(1.2); }
+  .hint { color: var(--muted); font-size: 13px; margin: 8px 0 0; }
+  .inline { display: flex; }
+  .inline input { flex: 1 1 auto; min-width: 0; }
+  .inline .tbtn { margin-left: 8px; flex: 0 0 auto; }
+  .setbtns .tbtn { width: 100%; font-size: 14px; padding: 8px 10px; }
+  .field label { display: block; font-weight: 600; margin: 4px 0 6px; }
+  .msg-err { color: #ff8a8f; }
+  .msg-ok { color: #6fdc9f; }
+  .tip { margin: 16px 0 0; padding: 10px 12px; border: 1px solid var(--line); border-radius: 12px; background: var(--surface-2); }
+  .tip summary { cursor: pointer; font-weight: 700; }
+  .tip p { margin: 8px 0 0; font-size: 14px; }
+  .path { font-weight: 600; }
+  .caution { color: #ffd48a; }
+  .loghead { display: flex; align-items: center; justify-content: space-between; margin-top: 16px; }
+  .loghead h3 { margin: 0; font-size: 15px; }
+  .log {
+    margin: 8px 0 0; max-height: 240px; overflow: auto; padding: 10px; border-radius: 10px; border: 1px solid var(--line);
+    background: #07090c; color: #c9d1da; font: 12px/1.45 ui-monospace, Menlo, Consolas, monospace; white-space: pre-wrap; word-break: break-all;
+  }
+  .about { margin-top: 18px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line); background: var(--surface-2); }
+  .about h3 { margin: 0 0 6px; font-size: 15px; }
+  .about p { margin: 4px 0; font-size: 14px; }
+  .about .privacy { color: var(--muted); }
+
+  /* ---------- toast ---------- */
+  .toast {
+    position: fixed; left: 50%; bottom: 18px; bottom: calc(18px + env(safe-area-inset-bottom)); z-index: 60;
+    -webkit-transform: translateX(-50%); transform: translateX(-50%);
+    max-width: 92vw; padding: 10px 16px; border-radius: 12px; background: #2b313a; color: var(--text);
+    border: 1px solid #3a414c; box-shadow: 0 8px 24px rgba(0,0,0,.5); font-size: 15px; text-align: center;
+    opacity: 0; pointer-events: none; -webkit-transition: opacity .2s; transition: opacity .2s;
+  }
+  .toast.show { opacity: 1; }
+  .haptic { display: none; }
+
+  @media (max-width: 340px) {
+    .app { padding-left: 8px; padding-right: 8px; }
+    .remote { padding: 18px 12px 16px; }
+    .dpad { width: 204px; height: 204px; }
+    .rocker { height: 150px; width: 60px; }
+    .brand { display: none; }
+    .g5 { grid-gap: 6px; gap: 6px; }
+  }
+  @media (min-width: 420px) {
+    .remote { max-width: 320px; }
+    .dpad { width: 236px; height: 236px; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    * { animation: none !important; transition: none !important; }
+  }
+</style>
+</head>
+<body>
+<noscript><p style="padding:16px">This remote needs JavaScript. Please enable it and reload.</p></noscript>
+
+<div class="app">
+  <header class="topbar">
+    <div class="brand">TV Remote</div>
+    <button type="button" id="pill" class="pill red" aria-describedby="liveStatus" title="Connection status – tap to connect">
+      <span class="dot" aria-hidden="true"></span><span class="ptext" id="pillText">Not connected</span>
+    </button>
+    <button type="button" id="btnSettings" class="icon-btn" aria-label="Settings" aria-haspopup="dialog" aria-controls="settings" title="Settings">
+      <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="9" stroke-width="3.2" stroke-dasharray="3.534 3.534"/><circle cx="12" cy="12" r="6.4" stroke-width="2.8"/></svg>
+    </button>
+  </header>
+
+  <div id="banner" class="banner" role="status" hidden></div>
+
+  <main id="remote" class="remote" aria-label="TV remote control">
+    <div class="row">
+      <button type="button" class="btn power" id="btnPower" data-key="KEY_POWER" aria-label="Power – tap twice to switch the TV off" title="Power (P)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M12 3.5v8"/><path d="M6.6 6.8a7.6 7.6 0 1 0 10.8 0"/></svg>
+      </button>
+      <button type="button" class="btn chip" data-key="KEY_SOURCE" aria-label="Source" title="Source (S)">SOURCE</button>
+    </div>
+    <div class="row">
+      <button type="button" class="btn chip" id="btn123" aria-label="123 – more keys: numbers, colours, media, apps and text" aria-haspopup="dialog" aria-controls="more" title="More keys">123</button>
+      <button type="button" class="btn chip" data-key="KEY_MENU" aria-label="Menu" title="Menu">MENU</button>
+    </div>
+
+    <div class="dpad" role="group" aria-label="Direction pad">
+      <button type="button" class="dp up" data-key="KEY_UP" data-repeat aria-label="Up" title="Up (arrow key)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 14.5 5.5-5.5 5.5 5.5"/></svg>
+      </button>
+      <button type="button" class="dp left" data-key="KEY_LEFT" data-repeat aria-label="Left" title="Left (arrow key)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m14.5 6.5-5.5 5.5 5.5 5.5"/></svg>
+      </button>
+      <button type="button" class="dp right" data-key="KEY_RIGHT" data-repeat aria-label="Right" title="Right (arrow key)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m9.5 6.5 5.5 5.5-5.5 5.5"/></svg>
+      </button>
+      <button type="button" class="dp down" data-key="KEY_DOWN" data-repeat aria-label="Down" title="Down (arrow key)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></svg>
+      </button>
+      <button type="button" class="dp ok" data-key="KEY_ENTER" aria-label="OK" title="OK (Enter)">OK</button>
+    </div>
+
+    <div class="row">
+      <button type="button" class="btn round" data-key="KEY_RETURN" aria-label="Return" title="Return (Backspace)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M9.5 6 5 10.5 9.5 15"/><path d="M5 10.5h9.5a4.5 4.5 0 0 1 0 9H11"/></svg>
+      </button>
+      <button type="button" class="btn round" id="btnPlayPause" aria-label="Play or pause" title="Play / Pause">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6.5v11l8-5.5z" fill="currentColor"/><path d="M15.2 6.5v11M19.6 6.5v11" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg>
+      </button>
+      <button type="button" class="btn round" data-key="KEY_HOME" aria-label="Home (Smart Hub)" title="Home (H)">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.2 12 4.5l8 6.7"/><path d="M6.5 9.5V19.5h11V9.5"/></svg>
+      </button>
+    </div>
+
+    <div class="rockers">
+      <div class="rocker" role="group" aria-label="Volume">
+        <button type="button" data-key="KEY_VOLUP" data-repeat aria-label="Volume up" title="Volume up (+)">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M12 6v12M6 12h12"/></svg>
+        </button>
+        <span class="lbl" aria-hidden="true">VOL</span>
+        <button type="button" data-key="KEY_VOLDOWN" data-repeat aria-label="Volume down" title="Volume down (−)">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"><path d="M6 12h12"/></svg>
+        </button>
+      </div>
+      <button type="button" class="btn round" data-key="KEY_MUTE" aria-label="Mute" title="Mute (M)">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3.5 9.3h3.6L11.8 5.5v13l-4.7-3.8H3.5z" fill="currentColor"/><path d="m15.3 9.3 5.2 5.4m0-5.4-5.2 5.4" fill="none" stroke="currentColor" stroke-width="2.3" stroke-linecap="round"/></svg>
+      </button>
+      <div class="rocker" role="group" aria-label="Channel">
+        <button type="button" data-key="KEY_CHUP" data-repeat aria-label="Channel up" title="Channel up (Page Up)">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 14.5 5.5-5.5 5.5 5.5"/></svg>
+        </button>
+        <span class="lbl" aria-hidden="true">CH</span>
+        <button type="button" data-key="KEY_CHDOWN" data-repeat aria-label="Channel down" title="Channel down (Page Down)">
+          <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="m6.5 9.5 5.5 5.5 5.5-5.5"/></svg>
+        </button>
+      </div>
+    </div>
+    <div class="logo" aria-hidden="true">SAMSUNG</div>
+  </main>
+
+  <p class="foot"><button type="button" class="linkbtn" id="lnkAbout">About &amp; help</button> · v<span id="footVer"></span></p>
+</div>
+
+<!-- ======================= More keys ("123") ======================= -->
+<div class="sheet" id="more" role="dialog" aria-modal="true" aria-labelledby="moreTitle" hidden>
+  <div class="panel">
+    <div class="sheet-head">
+      <h2 id="moreTitle">More keys</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Close more keys">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+      </button>
+    </div>
+
+    <h3 class="sec">Numbers</h3>
+    <div class="grid g3">
+      <button type="button" class="key" data-key="KEY_1">1</button>
+      <button type="button" class="key" data-key="KEY_2">2</button>
+      <button type="button" class="key" data-key="KEY_3">3</button>
+      <button type="button" class="key" data-key="KEY_4">4</button>
+      <button type="button" class="key" data-key="KEY_5">5</button>
+      <button type="button" class="key" data-key="KEY_6">6</button>
+      <button type="button" class="key" data-key="KEY_7">7</button>
+      <button type="button" class="key" data-key="KEY_8">8</button>
+      <button type="button" class="key" data-key="KEY_9">9</button>
+      <button type="button" class="key" data-key="KEY_PLUS100" aria-label="Dash (sub-channel)">–</button>
+      <button type="button" class="key" data-key="KEY_0">0</button>
+      <button type="button" class="key small" data-key="KEY_PRECH" aria-label="Previous channel">PRE-CH</button>
+    </div>
+
+    <h3 class="sec">Colour keys</h3>
+    <div class="grid g4">
+      <button type="button" class="key c-red" data-key="KEY_RED" aria-label="A (red)">A</button>
+      <button type="button" class="key c-green" data-key="KEY_GREEN" aria-label="B (green)">B</button>
+      <button type="button" class="key c-yellow" data-key="KEY_YELLOW" aria-label="C (yellow)">C</button>
+      <button type="button" class="key c-blue" data-key="KEY_CYAN" aria-label="D (blue)">D</button>
+    </div>
+
+    <h3 class="sec">TV keys</h3>
+    <div class="grid g3">
+      <button type="button" class="key small" data-key="KEY_GUIDE">Guide</button>
+      <button type="button" class="key small" data-key="KEY_CH_LIST">CH List</button>
+      <button type="button" class="key small" data-key="KEY_INFO">Info</button>
+      <button type="button" class="key small" data-key="KEY_TOOLS">Tools</button>
+      <button type="button" class="key small" data-key="KEY_EXIT">Exit</button>
+      <button type="button" class="key small" data-key="KEY_HDMI">HDMI</button>
+    </div>
+
+    <h3 class="sec">Media</h3>
+    <div class="grid g5">
+      <button type="button" class="key rep" data-key="KEY_REWIND" data-repeat aria-label="Rewind" title="Rewind">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M11.5 6.5v11L3.5 12zM20.5 6.5v11l-8-5.5z"/></svg>
+      </button>
+      <button type="button" class="key" data-key="KEY_PLAY" aria-label="Play" title="Play">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M7 5v14l11.5-7z"/></svg>
+      </button>
+      <button type="button" class="key" data-key="KEY_PAUSE" aria-label="Pause" title="Pause">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M6.5 5h4v14h-4zM13.5 5h4v14h-4z"/></svg>
+      </button>
+      <button type="button" class="key" data-key="KEY_STOP" aria-label="Stop" title="Stop">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><rect x="6" y="6" width="12" height="12" rx="1.6"/></svg>
+      </button>
+      <button type="button" class="key rep" data-key="KEY_FF" data-repeat aria-label="Fast forward" title="Fast forward">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor"><path d="M3.5 6.5v11l8-5.5zM12.5 6.5v11l8-5.5z"/></svg>
+      </button>
+    </div>
+
+    <h3 class="sec">Apps</h3>
+    <div class="grid g3" id="apps"></div>
+    <p class="hint">App buttons are not confirmed on this TV model.</p>
+
+    <h3 class="sec"><label for="txt">Type text</label></h3>
+    <form id="textForm" class="inline" autocomplete="off">
+      <input id="txt" type="text" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="send" placeholder="Text for the TV">
+      <button type="submit" class="tbtn primary">Send</button>
+    </form>
+    <p class="hint">Open a search or text box on the TV first, then send.</p>
+  </div>
+</div>
+
+<!-- ======================= Settings ======================= -->
+<div class="sheet" id="settings" role="dialog" aria-modal="true" aria-labelledby="setTitle" hidden>
+  <div class="panel">
+    <div class="sheet-head">
+      <h2 id="setTitle">Settings</h2>
+      <button type="button" class="icon-btn" data-close aria-label="Close settings">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M6.5 6.5l11 11M17.5 6.5l-11 11"/></svg>
+      </button>
+    </div>
+    <p class="hint" style="margin-top:0">Status: <strong id="setStatus">Not connected</strong></p>
+
+    <form id="ipForm" class="field" novalidate>
+      <label for="ipInput">TV address (IP)</label>
+      <div class="inline">
+        <input id="ipInput" type="text" inputmode="decimal" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" placeholder="192.168.100.22" aria-describedby="ipHint">
+        <button type="submit" class="tbtn primary">Save</button>
+      </div>
+      <p class="hint" id="ipHint">A link can also set it: add ?ip=192.168.100.22 to the address.</p>
+    </form>
+
+    <div class="grid g2 setbtns" style="margin-top:12px">
+      <button type="button" class="tbtn primary" id="sConnect">Connect</button>
+      <button type="button" class="tbtn" id="sDisconnect">Disconnect</button>
+      <button type="button" class="tbtn" id="sForget">Forget pairing</button>
+      <button type="button" class="tbtn" id="sReach">Test TV reachability</button>
+      <button type="button" class="tbtn" id="sTrust">Trust TV certificate</button>
+      <button type="button" class="tbtn" id="sInfo">Open TV info page</button>
+    </div>
+    <p id="reachResult" class="hint" role="status" aria-live="polite"></p>
+
+    <details class="tip" id="allowTip">
+      <summary>Stop the TV asking “Allow?” for every new phone</summary>
+      <p>On the TV: <span class="path">Settings › General › External Device Manager › Device Connection Manager › Access Notification › Off</span></p>
+      <p class="caution">Caution: after this, any phone or computer on the Wi-Fi can control the TV without asking.</p>
+      <p>Refused a phone by mistake? Same menu › <span class="path">Device List</span> › set it to Allow, or delete it and connect again.</p>
+      <p>No remote to press Allow? Use the control button on the TV itself, or this page on a phone that is already connected.</p>
+    </details>
+
+    <div class="loghead">
+      <h3>Diagnostics log</h3>
+      <button type="button" class="tbtn" id="sCopy">Copy log</button>
+    </div>
+    <pre id="log" class="log" tabindex="0" aria-label="Diagnostics log"></pre>
+
+    <section class="about" id="about" aria-labelledby="aboutTitle">
+      <h3 id="aboutTitle">About</h3>
+      <p><strong>TV Remote</strong> · Created by <span id="aboutName">Mohamed AlSaegh</span></p>
+      <p>Contact: <a id="aboutTel" href="tel:+97333132112">33132112</a></p>
+      <p>A phone remote for the Samsung TV in this home. It works only on the home Wi-Fi.</p>
+      <p>Version <span id="aboutVer"></span></p>
+      <p class="privacy">Privacy: commands go directly from this phone to the TV over the home Wi-Fi. No analytics, no tracking, nothing is sent to any server. The TV address and pairing are kept only on this phone.</p>
+      <p><a href="qr-poster.html">QR poster for the TV</a></p>
+    </section>
+  </div>
+</div>
+
+<div id="toast" class="toast" role="status" aria-live="polite"></div>
+<div id="liveStatus" class="sr-only" aria-live="polite"></div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* =========================================================================
+     CFG – the only block you normally edit
+     ========================================================================= */
+  var CFG = {
+    VERSION: '1.0.0',
+    DEFAULT_IP: '192.168.100.22',        // TV address (reserve it in the router)
+    APP_NAME: 'Web Remote',              // name the TV shows in its "Allow?" question and Device List
+
+    // Public copies (Mode B). Leave a placeholder (MYNAME, NAS_IP, ...) or '' to switch that redirect OFF.
+    // Mode A (NAS): HTTP_HOME = your NAS address, e.g. 'http://192.168.100.5:8080/'. Pages served from a
+    // private address never redirect; HTTP_HOME is then only shown as the "plain-http address" to copy.
+    HTTPS_HOME: 'https://MYNAME.github.io/tv-remote/',   // secure copy (new Chrome / Edge / Samsung Internet)
+    HTTP_HOME: 'http://tv.site.je/',                     // plain-http copy (iPhone, Firefox, old Android)
+
+    CONTACT_NAME: 'Mohamed AlSaegh',
+    CONTACT_PHONE: '33132112',           // shown on screen
+    CONTACT_TEL: '+97333132112',         // dialled (international form works from any SIM)
+
+    // Timeouts and timings (milliseconds)
+    OPEN_TIMEOUT_MS: 8000,               // the TV must accept the network connection within this time
+    LNA_PROMPT_TIMEOUT_MS: 60000,        // ...longer while Chrome's "local network" question is on screen
+    ALLOW_TIMEOUT_MS: 45000,             // time for someone to press Allow on the TV
+    FAST_FAIL_MS: 1500,                  // failures quicker than this = refused, so the other port is tried
+    REACH_TIMEOUT_MS: 4000,              // "Test TV reachability"
+    STALE_AFTER_HIDDEN_MS: 15000,        // after this long in the background, open a fresh connection on wake-up
+    RECONNECT_DELAYS_MS: [1000, 2500, 5000, 10000],
+    REPEAT_DELAY_MS: 400,                // hold-to-repeat: first repeat after...
+    REPEAT_INTERVAL_MS: 140,             // ...then every...
+    QUEUE_MAX: 8,                        // key presses remembered while (re)connecting
+    QUEUE_GAP_MS: 160,                   // pause between queued keys when they are sent
+    QUEUE_MAX_AGE_MS: 120000,            // queued keys older than this are dropped
+    POWER_CONFIRM_MS: 3000,              // Power needs a second tap within this time (0 = single tap)
+
+    LNA_MIN_CHROMIUM: 147,               // Chromium from this version needs the secure copy on public hosts
+    APP_REST_FALLBACK: true,             // also send the TV's REST "open app" call (plain-http pages only)
+    APPS: [
+      { name: 'Netflix', id: '11101200001' },
+      { name: 'YouTube', id: '111299001912' },
+      { name: 'Prime Video', id: '3201512006785' }
+    ]
+  };
+  /* ============================== end of CFG ============================== */
+
+
+  /* ROUTING-START – pure functions (no page state); the test suite loads this block on its own */
+  function parseQuery(search) {
+    var out = Object.create(null);
+    String(search || '').replace(/^\?/, '').split('&').forEach(function (pair) {
+      if (!pair) return;
+      var i = pair.indexOf('=');
+      var k = i < 0 ? pair : pair.slice(0, i), v = i < 0 ? '' : pair.slice(i + 1);
+      try { k = decodeURIComponent(k.replace(/\+/g, ' ')); v = decodeURIComponent(v.replace(/\+/g, ' ')); } catch (e) { return; }
+      if (!(k in out)) out[k] = v;
+    });
+    return out;
+  }
+
+  function hostKind(hostname) {
+    var h = String(hostname || '').toLowerCase(), m;
+    if (h.charAt(0) === '[') h = h.slice(1, -1);
+    if (!h) return 'local';
+    if (h === 'localhost' || /\.localhost$/.test(h) || h === '::1') return 'loopback';
+    m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(h);
+    if (m) {
+      var a = +m[1], b = +m[2];
+      if (a === 127) return 'loopback';
+      if (a === 10 || (a === 172 && b >= 16 && b <= 31) || (a === 192 && b === 168) || (a === 169 && b === 254)) return 'local';
+      return 'public';
+    }
+    if (h.indexOf(':') >= 0) {
+      m = /^::ffff:(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3})$/.exec(h);
+      if (m) return hostKind(m[1]);
+      if (/^f[cd][0-9a-f]{0,2}:/.test(h) || /^fe[89ab][0-9a-f]?:/.test(h)) return 'local';
+      return 'public';
+    }
+    if (h.indexOf('.') < 0) return 'local';                         // single-label name, e.g. "diskstation"
+    if (/\.(local|lan|home|internal|intranet|localdomain|home\.arpa)$/.test(h)) return 'local';
+    return 'public';
+  }
+
+  // Returns {href, scheme, host, port} for a usable address, or null for '' / placeholders / junk.
+  function realUrl(u) {
+    if (!u || typeof u !== 'string') return null;
+    u = u.replace(/^\s+|\s+$/g, '');
+    // Placeholders are written in CAPITALS on purpose (real host names are lower-case), so this check is case-sensitive.
+    if (/MYNAME|YOURNAME|YOUR_|USERNAME|NAS_IP/.test(u) || /x\.x\.x\.x|example\.(com|org|net)|[<>\s]/i.test(u)) return null;
+    var m = /^(https?):\/\/([a-z0-9.\-]+|\[[0-9a-f:.]+\])(?::(\d{1,5}))?(\/[^?#]*)?(\?[^#]*)?$/i.exec(u);
+    if (!m) return null;
+    var scheme = m[1].toLowerCase(), host = m[2].toLowerCase();
+    return {
+      href: scheme + '://' + host + (m[3] ? ':' + m[3] : '') + (m[4] || '/') + (m[5] || ''),
+      scheme: scheme, host: host, port: m[3] || (scheme === 'https' ? '443' : '80')
+    };
+  }
+
+  function sameOrigin(a, loc) {
+    var proto = String(loc.protocol || '').replace(':', '');
+    var port = loc.port || (proto === 'https' ? '443' : '80');
+    return a.scheme === proto && a.host === String(loc.hostname || '').toLowerCase() && a.port === String(port);
+  }
+
+  function withParams(href, ip) {
+    return href + (href.indexOf('?') >= 0 ? '&' : '?') + (ip ? 'ip=' + encodeURIComponent(ip) + '&' : '') + 'tw=1';
+  }
+
+  function detectBrowser(ua, touchPoints) {
+    ua = String(ua || '');
+    var b = { name: 'Unknown browser', version: '', engine: 'unknown', chromium: 0, ios: false, iosMajor: 0, iosMinor: 0,
+      android: /Android/i.test(ua), webview: false, os: '' };
+    var m, n;
+    function set(name, ver) { b.name = name; b.version = ver ? String(ver).split('.').slice(0, 2).join('.') : ''; }
+    var iPadDesktop = /Macintosh/.test(ua) && (touchPoints || 0) > 1;
+    if (/iPhone|iPad|iPod/.test(ua) || iPadDesktop) {
+      b.ios = true; b.engine = 'webkit';
+      m = /OS (\d+)[_.](\d+)/.exec(ua) || (iPadDesktop ? /Version\/(\d+)\.(\d+)/.exec(ua) : null);
+      if (m) { b.iosMajor = +m[1]; b.iosMinor = +m[2]; }
+      if ((m = /CriOS\/([\d.]+)/.exec(ua))) set('Chrome', m[1]);
+      else if ((m = /FxiOS\/([\d.]+)/.exec(ua))) set('Firefox', m[1]);
+      else if ((m = /EdgiOS\/([\d.]+)/.exec(ua))) set('Edge', m[1]);
+      else if ((m = /(?:OPiOS|OPT)\/([\d.]+)/.exec(ua))) set('Opera', m[1]);
+      else if ((m = /Version\/([\d.]+).*Safari\//.exec(ua))) set('Safari', m[1]);
+      else set('In-app browser', '');
+      b.os = (iPadDesktop || /iPad/.test(ua) ? 'iPadOS ' : 'iOS ') + (b.iosMajor ? b.iosMajor + '.' + b.iosMinor : '?');
+      return b;
+    }
+    b.os = b.android ? (((m = /Android ([\d.]+)/.exec(ua)) ? 'Android ' + m[1] : 'Android'))
+      : /Windows/.test(ua) ? 'Windows' : /CrOS/.test(ua) ? 'ChromeOS' : /Mac OS X|Macintosh/.test(ua) ? 'macOS'
+      : /Linux/.test(ua) ? 'Linux' : 'unknown OS';
+    if ((m = /Firefox\/([\d.]+)/.exec(ua)) && !/Seamonkey/i.test(ua)) { set('Firefox', m[1]); b.engine = 'gecko'; return b; }
+    if ((m = /(?:Chrome|Chromium|HeadlessChrome)\/([\d.]+)/.exec(ua))) {
+      b.engine = 'blink'; b.chromium = parseInt(m[1], 10) || 0;
+      if ((n = /SamsungBrowser\/([\d.]+)/.exec(ua))) set('Samsung Internet', n[1]);
+      else if ((n = /EdgA?\/([\d.]+)/.exec(ua))) set('Edge', n[1]);
+      else if ((n = /OPR\/([\d.]+)/.exec(ua))) set('Opera', n[1]);
+      else if (b.android && (/; wv\)/.test(ua) || /Version\/[\d.]+ Chrome\//.test(ua))) { set('Android WebView', m[1]); b.webview = true; }
+      else set('Chrome', m[1]);
+      return b;
+    }
+    if ((m = /Version\/([\d.]+).*Safari\//.exec(ua))) { set('Safari', m[1]); b.engine = 'webkit'; return b; }
+    return b;
+  }
+
+  function browserLabel(b) {
+    var s = b.name + (b.version ? ' ' + b.version : '');
+    if (b.engine === 'blink' && b.name !== 'Chrome') s += ' (Chromium ' + b.chromium + ')';
+    return s + ' on ' + (b.os || 'unknown OS');
+  }
+
+  // New Chromium gates public-page -> home-network connections behind "Local network access".
+  function canUseLna(b, cfg) {
+    return b.engine === 'blink' && !b.ios && !b.webview && b.chromium >= cfg.LNA_MIN_CHROMIUM;
+  }
+
+  // iPhone browsers that already upgrade http links to https (Safari 18.2+; others assumed to).
+  function iosUpgradesLinks(b) {
+    return b.ios && (b.name !== 'Safari' || b.iosMajor > 18 || (b.iosMajor === 18 && b.iosMinor >= 2));
+  }
+
+  // Decide, once per page load, whether this browser is on the right copy of the page.
+  //   {action:'stay'|'redirect', url, notice:''|'ios-step'|'need-http'|'need-https', why}
+  function decideRoute(loc, b, cfg) {
+    var r = { action: 'stay', url: '', notice: '', why: '' };
+    var q = parseQuery(loc.search);
+    var tw = q.tw === '1', ip = q.ip || '';
+    var secure = loc.protocol === 'https:';
+    var kind = loc.protocol === 'file:' ? 'local' : hostKind(loc.hostname);
+    var lna = canUseLna(b, cfg);
+    var httpsHome = realUrl(cfg.HTTPS_HOME), httpHome = realUrl(cfg.HTTP_HOME);
+
+    if (kind !== 'public') {                                   // Mode A: NAS / localhost / .local – never redirect
+      r.why = 'page is on the home network (' + kind + ') – no redirects';
+      if (secure && !lna) { r.notice = b.ios ? 'ios-step' : 'need-http'; r.why += '; this browser needs a plain-http page'; }
+      return r;
+    }
+    if (lna) {                                                 // new Chrome / Edge / Samsung Internet
+      if (secure) { r.why = 'secure page + Chromium ' + b.chromium + ' – correct copy'; return r; }
+      if (httpsHome && !tw && !sameOrigin(httpsHome, loc)) {
+        r.action = 'redirect'; r.url = withParams(httpsHome.href, ip); r.why = 'Chromium ' + b.chromium + ' needs the secure copy';
+        return r;
+      }
+      r.notice = 'need-https';
+      r.why = 'Chromium ' + b.chromium + ' on a plain-http public page' + (tw ? ' (already redirected once)' : httpsHome ? '' : ', no secure copy configured');
+      return r;
+    }
+    if (!secure) { r.why = 'plain-http page – correct copy for ' + b.name; return r; }
+    var iosStuck = b.ios && !!httpHome && httpHome.host === String(loc.hostname).toLowerCase() && iosUpgradesLinks(b);
+    if (httpHome && !tw && !iosStuck) {
+      r.action = 'redirect'; r.url = withParams(httpHome.href, ip); r.why = b.name + ' needs the plain-http copy';
+      return r;
+    }
+    r.notice = b.ios ? 'ios-step' : 'need-http';
+    r.why = b.name + ' on a secure page' + (iosStuck ? ' (https copy of the http host – the browser would upgrade again)'
+      : tw ? ' (already redirected once)' : ', no plain-http copy configured');
+    return r;
+  }
+  /* ROUTING-END */
+
+
+  /* ------------------------------------------------------------------ helpers */
+  function $(id) { return document.getElementById(id); }
+  function now() { return Date.now(); }
+  function pad(n) { return (n < 10 ? '0' : '') + n; }
+
+  function el(tag, attrs, kids) {
+    var n = document.createElement(tag), k, v, i;
+    if (attrs) for (k in attrs) {
+      if (!Object.prototype.hasOwnProperty.call(attrs, k)) continue;
+      v = attrs[k];
+      if (v === null || v === undefined || v === false) continue;
+      if (k === 'text') n.textContent = v;
+      else if (k === 'class') n.className = v;
+      else if (k.slice(0, 2) === 'on' && typeof v === 'function') n.addEventListener(k.slice(2), v);
+      else n.setAttribute(k, v === true ? '' : String(v));
+    }
+    if (kids) for (i = 0; i < kids.length; i++) {
+      if (kids[i] === null || kids[i] === undefined) continue;
+      n.appendChild(typeof kids[i] === 'string' ? document.createTextNode(kids[i]) : kids[i]);
+    }
+    return n;
+  }
+  function clear(node) { while (node.firstChild) node.removeChild(node.firstChild); }
+
+  var store = {
+    get: function (k) { try { return window.localStorage.getItem('tvr.' + k); } catch (e) { return null; } },
+    set: function (k, v) { try { window.localStorage.setItem('tvr.' + k, v); } catch (e) { /* private mode */ } },
+    del: function (k) { try { window.localStorage.removeItem('tvr.' + k); } catch (e) { /* ignore */ } }
+  };
+
+  function isValidTvAddress(s) {
+    s = String(s || '');
+    var m = /^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/.exec(s);
+    if (m) return +m[1] <= 255 && +m[2] <= 255 && +m[3] <= 255 && +m[4] <= 255;
+    return s.length <= 253 && /^[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?(\.[a-z0-9]([a-z0-9-]{0,61}[a-z0-9])?)*$/i.test(s);
+  }
+
+  function b64utf8(s) {
+    var bytes, bin = '', i;
+    if (window.TextEncoder) {
+      bytes = new TextEncoder().encode(s);
+      for (i = 0; i < bytes.length; i++) bin += String.fromCharCode(bytes[i]);
+      return btoa(bin);
+    }
+    return btoa(unescape(encodeURIComponent(s)));
+  }
+
+  function goTo(url) { window.location.replace(url); }
+
+
+  /* ------------------------------------------------------------------ state */
+  var browser = detectBrowser(navigator.userAgent, navigator.maxTouchPoints || 0);
+  browser.label = browserLabel(browser);
+  var pageKind = location.protocol === 'file:' ? 'local' : hostKind(location.hostname);
+  var route = decideRoute(location, browser, CFG);
+
+  var state = {
+    ip: CFG.DEFAULT_IP,
+    phase: 'idle',            // idle | connecting | waitAllow | connected | reconnecting | failed
+    port: 0,
+    ws: null,
+    attempt: 0,               // bumping it makes callbacks of older sockets harmless
+    info: null,               // current attempt: {reason, silent, results[]}
+    wantConnected: false,
+    everConnected: false,
+    retryIndex: 0,
+    queue: [],
+    lna: 'n/a',               // Chrome "local-network" permission: granted | prompt | denied | unknown | n/a
+    notice: route.notice,     // routing notice shown at load
+    problem: '',
+    hiddenAt: 0
+  };
+  var timers = { open: 0, allow: 0, allowBanner: 0, reconnect: 0, toast: 0, power: 0 };
+  var statusBase = { color: 'red', text: 'Not connected' };
+  var lastAnnounced = '';
+  var logLines = [];
+  var openSheetEl = null, lastFocus = null;
+  var ppNext = 'KEY_PAUSE';
+  var powerArmedUntil = 0;
+  var hapticLabel = null;
+
+
+  /* ------------------------------------------------------------------ log */
+  function redact(s) { return String(s).replace(/token=([^&]{0,2})[^&]*/g, 'token=$1***'); }
+  function log(msg) {
+    var d = new Date();
+    logLines.push(pad(d.getHours()) + ':' + pad(d.getMinutes()) + ':' + pad(d.getSeconds()) + '.' +
+      String(d.getMilliseconds() + 1000).slice(1) + '  ' + redact(msg));
+    if (logLines.length > 400) logLines.splice(0, logLines.length - 400);
+    if (openSheetEl && openSheetEl.id === 'settings') renderLog();
+    try { if (window.console) console.log('[remote] ' + redact(msg)); } catch (e) { /* ignore */ }
+  }
+  function logHeader() {
+    return 'Page: ' + location.href + ' | Browser: ' + browser.label + ' | TV IP: ' + state.ip + ' | v' + CFG.VERSION;
+  }
+  function logText() {
+    return [
+      logHeader(),
+      'Details: ' + (location.protocol === 'https:' ? 'secure (https) page' : location.protocol.replace(':', '') + ' page') +
+        ', page network: ' + pageKind + ', route: ' + route.why + ', local-network permission: ' + state.lna +
+        ', state: ' + state.phase + (state.port ? ' (port ' + state.port + ')' : ''),
+      'User agent: ' + navigator.userAgent,
+      '----'
+    ].concat(logLines).join('\n');
+  }
+  function renderLog() {
+    var pre = $('log'); if (!pre) return;
+    var atBottom = pre.scrollTop + pre.clientHeight >= pre.scrollHeight - 8;
+    pre.textContent = logText();
+    if (atBottom) pre.scrollTop = pre.scrollHeight;
+  }
+
+
+  /* ------------------------------------------------------------------ status, banner, toast */
+  function announce(text) { var n = $('liveStatus'); if (n) n.textContent = text; }
+
+  function setPhase(phase, port, lnaWaiting) {
+    state.phase = phase;
+    if (port) state.port = port;
+    var color = phase === 'connected' ? 'green' : (phase === 'connecting' || phase === 'waitAllow' || phase === 'reconnecting') ? 'amber' : 'red';
+    var text = phase === 'connected' ? 'Connected'
+      : phase === 'connecting' ? (lnaWaiting ? 'Answer Chrome’s question' : 'Connecting…')
+      : phase === 'waitAllow' ? 'Press Allow on the TV'
+      : phase === 'reconnecting' ? 'Reconnecting…' : 'Not connected';
+    statusBase = { color: color, text: text };
+    updateStatus();
+  }
+  function updateStatus() {
+    var t = statusBase.text + (state.queue.length && state.phase !== 'connected' ? ' · ' + state.queue.length + ' waiting' : '');
+    $('pill').className = 'pill ' + statusBase.color;
+    $('pillText').textContent = t;
+    $('setStatus').textContent = t + (state.phase === 'connected' ? ' (port ' + state.port + ')' : '');
+    if (statusBase.text !== lastAnnounced) { lastAnnounced = statusBase.text; announce('TV remote: ' + statusBase.text); }
+  }
+
+  function toast(msg) {
+    var t = $('toast');
+    t.textContent = msg;
+    t.className = 'toast show';
+    clearTimeout(timers.toast);
+    timers.toast = setTimeout(function () { t.className = 'toast'; }, 3200);
+  }
+
+  function hideBanner() { var b = $('banner'); b.hidden = true; clear(b); state.problem = ''; }
+
+  function contactLine() {
+    return el('p', { class: 'contact' }, ['Still stuck? Call ' + CFG.CONTACT_NAME + ' on ',
+      el('a', { href: 'tel:' + CFG.CONTACT_TEL, text: CFG.CONTACT_PHONE })]);
+  }
+
+  // The plain-http address people copy (iPhone step) – short, no tw=1.
+  function httpCopyAddress() {
+    var h = realUrl(CFG.HTTP_HOME);
+    if (!h && location.protocol === 'https:' && pageKind !== 'public') {
+      h = { href: 'http://' + location.hostname + (location.port && location.port !== '443' ? ':' + location.port : '') + location.pathname };
+    }
+    if (!h) return '';
+    return h.href + (state.ip !== CFG.DEFAULT_IP ? (h.href.indexOf('?') >= 0 ? '&' : '?') + 'ip=' + encodeURIComponent(state.ip) : '');
+  }
+  function linkIp() { return (state.ip !== CFG.DEFAULT_IP || parseQuery(location.search).ip) ? state.ip : ''; }
+
+  function messageFor(code) {
+    var ip = state.ip, httpAddr = httpCopyAddress(), hasHttps = !!realUrl(CFG.HTTPS_HOME), hasHttp = !!realUrl(CFG.HTTP_HOME);
+    var bar = browser.ios ? browser.name : 'the browser';
+    if (browser.ios && browser.name === 'In-app browser') bar = 'Safari';
+    switch (code) {
+      case 'lna-prompt': return { tone: 'info', title: 'One tap to connect',
+        lines: ['Tap Connect to TV. Chrome will ask to let this page reach devices on your local network – tap Allow.'],
+        actions: ['connect', 'settings'] };
+      case 'lna-denied': return { tone: 'error', title: 'Chrome is blocking the TV',
+        lines: ['Tap the icon at the left of the address bar › Permissions (or Site settings) › Local network access › Allow. Newer Chrome may call it “Apps on device”.',
+          'Then tap Try again.'], actions: ['retry', 'settings'] };
+      case 'allow-wait': return { tone: 'warn', title: 'Look at the TV',
+        lines: ['The TV is asking whether to allow “' + CFG.APP_NAME + '”. Choose Allow – with the control button on the TV, or with this page on a phone that is already connected.',
+          'Waiting up to ' + Math.round(CFG.ALLOW_TIMEOUT_MS / 1000) + ' seconds…'], actions: [] };
+      case 'allow-timeout': return { tone: 'error', title: 'Nobody pressed Allow on the TV',
+        lines: ['Tap Try again, then choose Allow on the TV straight away.',
+          'Settings explains how to stop the TV asking every new phone.'], actions: ['retry', 'settings'] };
+      case 'denied': return { tone: 'error', title: 'The TV refused this phone',
+        lines: ['On the TV: Settings › General › External Device Manager › Device Connection Manager › Device List.',
+          'Set “' + CFG.APP_NAME + '” to Allow (or delete it), then tap Try again.'], actions: ['retry', 'settings'] };
+      case 'closed-early': return { tone: 'error', title: 'The TV closed the connection',
+        lines: ['If a question appeared on the TV, choose Allow, then tap Try again.',
+          'If it keeps happening, switch the TV off and on with its own button.'], actions: ['retry', 'settings'] };
+      case 'unreachable': return { tone: 'error', title: 'Can’t reach the TV',
+        lines: ['Is the TV switched on? A phone can’t switch it on – use the button on the TV.',
+          'Is this phone on the home Wi-Fi? Guest Wi-Fi and mobile data can’t reach the TV.',
+          'TV address in use: ' + ip + ' (change it in Settings).'], actions: ['retry', 'settings'] };
+      case 'dropped': return { tone: 'error', title: 'Lost the connection to the TV',
+        lines: ['The TV may have been switched off, or this phone left the home Wi-Fi.'], actions: ['retry', 'settings'] };
+      case 'ios-step': return { tone: 'warn', title: 'iPhone: one quick step',
+        lines: httpAddr ? ['iPhones can reach the TV only from the plain-http page. An address you paste yourself stays on http.']
+          : ['iPhones need the plain-http copy of this page, and it is not set up yet.'],
+        address: httpAddr,
+        steps: httpAddr ? ['Tap Copy address.', 'Tap ' + bar + '’s address bar.', 'Paste (or tap “Paste and Go”).', 'Tap Go.'] : null,
+        actions: ['retry', 'settings'] };
+      case 'need-http':
+      case 'blocked': return { tone: code === 'blocked' ? 'error' : 'warn', title: 'Open the plain-http page',
+        lines: ['This browser can’t reach the TV from a secure (https) page.' + (httpAddr ? ' If the button brings you back here, copy the address below and paste it into the address bar.' : '')],
+        address: httpAddr, actions: (hasHttp ? ['open-http'] : []).concat(['retry', 'settings']) };
+      case 'need-https': return { tone: 'warn', title: 'Open the secure version',
+        lines: ['New Chrome, Edge and Samsung Internet reach home devices only from a secure (https) page.'],
+        actions: (hasHttps ? ['open-https'] : []).concat(['retry', 'settings']) };
+      case 'bad-ip': return { tone: 'error', title: 'TV address missing or wrong',
+        lines: ['Enter the TV’s address (like ' + CFG.DEFAULT_IP + ') in Settings.'], actions: ['settings', 'retry'] };
+      case 'no-websocket': return { tone: 'error', title: 'This browser is too old',
+        lines: ['Please use a current Chrome, Safari, Firefox or Samsung Internet.'], actions: [] };
+      case 'redirect': return { tone: 'info', title: 'Opening the right version for this browser…', lines: [], actions: [] };
+      default: return null;
+    }
+  }
+
+  function actionButton(kind) {
+    var defs = {
+      retry: ['Try again', 'tbtn', function () { state.retryIndex = 0; connect('Try again', { force: true }); }],
+      connect: ['Connect to TV', 'tbtn primary', function () { connect('Connect to TV button', { force: true }); }],
+      settings: ['Settings', 'tbtn', function () {
+        var allowRelated = /^(denied|allow-timeout|closed-early)$/.test(state.problem);
+        openSheet('settings');
+        if (allowRelated) { $('allowTip').open = true; }
+      }],
+      'open-http': ['Open plain-http page', 'tbtn primary', function () { log('Opening plain-http copy'); goTo(withParams(realUrl(CFG.HTTP_HOME).href, linkIp())); }],
+      'open-https': ['Open secure version', 'tbtn primary', function () { log('Opening secure copy'); goTo(withParams(realUrl(CFG.HTTPS_HOME).href, linkIp())); }],
+      trust: ['Trust TV certificate', 'tbtn', trustCertificate]
+    };
+    var d = defs[kind];
+    return el('button', { type: 'button', class: d[1], 'data-action': kind, onclick: d[2], text: d[0] });
+  }
+
+  function addressBox(addr) {
+    var input = el('textarea', { class: 'addr', readonly: true, rows: addr.length > 26 ? 2 : 1, 'aria-label': 'Plain-http address of the remote',
+      spellcheck: 'false', autocapitalize: 'off', autocorrect: 'off' });
+    input.value = addr;
+    function selectAll() { try { input.focus(); input.setSelectionRange(0, addr.length); } catch (e) { try { input.select(); } catch (x) { /* ignore */ } } }
+    input.addEventListener('focus', selectAll);
+    input.addEventListener('click', selectAll);
+    var btn = el('button', { type: 'button', class: 'tbtn primary', 'data-action': 'copy', text: 'Copy address' });
+    btn.addEventListener('click', function () {
+      copyText(addr).then(function (ok) {
+        if (ok) { toast('Address copied – now paste it into the address bar'); btn.textContent = 'Copied ✓'; }
+        else { selectAll(); toast('Press and hold the address, then choose Copy'); }
+      });
+    });
+    return el('div', { class: 'addrbox' }, [input, btn]);
+  }
+
+  function showProblem(code) {
+    var m = messageFor(code), b = $('banner'), i, row, ol;
+    if (!m) return;
+    state.problem = code;
+    clear(b);
+    b.className = 'banner ' + m.tone;
+    b.setAttribute('role', m.tone === 'error' ? 'alert' : 'status');
+    b.setAttribute('data-code', code);
+    b.appendChild(el('h2', { text: m.title }));
+    for (i = 0; i < m.lines.length; i++) b.appendChild(el('p', { text: m.lines[i] }));
+    if (m.address) b.appendChild(addressBox(m.address));
+    if (m.steps) {
+      ol = el('ol', { class: 'steps' });
+      for (i = 0; i < m.steps.length; i++) ol.appendChild(el('li', { text: m.steps[i] }));
+      b.appendChild(ol);
+    }
+    if (m.actions.length) {
+      row = el('div', { class: 'actions' });
+      for (i = 0; i < m.actions.length; i++) row.appendChild(actionButton(m.actions[i]));
+      b.appendChild(row);
+    }
+    if (code !== 'redirect') b.appendChild(contactLine());
+    b.hidden = false;
+  }
+
+
+  /* ------------------------------------------------------------------ clipboard */
+  function legacyCopy(text) {
+    var ta = document.createElement('textarea'), ok = false, sel, range;
+    ta.value = text;
+    ta.setAttribute('aria-hidden', 'true');
+    ta.style.position = 'fixed'; ta.style.top = '0'; ta.style.left = '0'; ta.style.opacity = '0'; ta.style.fontSize = '16px';
+    document.body.appendChild(ta);
+    try {
+      ta.contentEditable = 'true';
+      ta.readOnly = false;
+      range = document.createRange(); range.selectNodeContents(ta);
+      sel = window.getSelection(); sel.removeAllRanges(); sel.addRange(range);
+      ta.setSelectionRange(0, text.length);
+      ok = document.execCommand('copy');
+    } catch (e) { ok = false; }
+    document.body.removeChild(ta);
+    return ok;
+  }
+  function copyText(text) {
+    if (navigator.clipboard && navigator.clipboard.writeText && window.isSecureContext) {
+      return navigator.clipboard.writeText(text).then(function () { return true; }, function () { return legacyCopy(text); });
+    }
+    return Promise.resolve(legacyCopy(text));
+  }
+
+
+  /* ------------------------------------------------------------------ TV protocol */
+  function socketUrl(ip, port) {
+    var u = (port === 8002 ? 'wss' : 'ws') + '://' + ip + ':' + port + '/api/v2/channels/samsung.remote.control?name=' + b64utf8(CFG.APP_NAME);
+    var tok = port === 8002 ? store.get('token.' + ip) : null;
+    return tok ? u + '&token=' + encodeURIComponent(tok) : u;
+  }
+  function portOrder(ip) { return store.get('port.' + ip) === '8002' ? [8002, 8001] : [8001, 8002]; }
+
+  function keyCmd(key) {
+    return { label: key, msg: { method: 'ms.remote.control', params: { Cmd: 'Click', DataOfCmd: key, Option: 'false', TypeOfRemote: 'SendRemoteKey' } } };
+  }
+  function textCmd(text) {
+    return { label: 'text (' + text.length + ' characters)', msg: { method: 'ms.remote.control',
+      params: { Cmd: b64utf8(text), DataOfCmd: 'base64', TypeOfRemote: 'SendInputString' } } };
+  }
+  function appCmd(app) {
+    return { label: 'open app ' + app.name, app: app, msg: { method: 'ms.channel.emit',
+      params: { event: 'ed.apps.launch', to: 'host', data: { appId: app.id, action_type: 'DEEP_LINK' } } } };
+  }
+
+  function lnaMatters() { return location.protocol === 'https:' && pageKind === 'public' && canUseLna(browser, CFG); }
+
+  function queryLna(cb) {
+    var done = false;
+    function fin(s) { if (!done) { done = true; cb(s); } }
+    // Only the current name is queried: Google warns the old "local-network-access" name can crash older Chrome.
+    if (!navigator.permissions || !navigator.permissions.query) { fin('unknown'); return; }
+    try {
+      navigator.permissions.query({ name: 'local-network' }).then(function (st) {
+        try {
+          st.onchange = function () {
+            state.lna = st.state;
+            log('Local network permission is now: ' + st.state);
+            if (st.state === 'granted' && (state.problem === 'lna-prompt' || state.problem === 'lna-denied') && state.phase !== 'connected') {
+              hideBanner(); connect('permission granted', { force: state.phase === 'failed' || state.phase === 'idle' });
+            }
+          };
+        } catch (e) { /* ignore */ }
+        fin(st.state);
+      }, function () { fin('unknown'); });
+    } catch (e) { fin('unknown'); }
+    setTimeout(function () { fin('unknown'); }, 2000);
+  }
+
+  function isConnected() { return state.phase === 'connected' && !!state.ws && state.ws.readyState === 1; }
+
+  function killSocket() {
+    var s = state.ws;
+    state.ws = null;
+    clearTimeout(timers.open); clearTimeout(timers.allow); clearTimeout(timers.allowBanner);
+    if (s) {
+      s.onopen = s.onmessage = s.onerror = s.onclose = null;
+      try { s.close(); } catch (e) { /* ignore */ }
+    }
+  }
+
+  function connect(reason, opts) {
+    opts = opts || {};
+    clearTimeout(timers.reconnect); timers.reconnect = 0;
+    if (isConnected()) return;
+    if ((state.phase === 'connecting' || state.phase === 'waitAllow') && !opts.force) return;
+    if (!('WebSocket' in window)) { showProblem('no-websocket'); return; }
+    if (!isValidTvAddress(state.ip)) { setPhase('failed'); showProblem('bad-ip'); return; }
+    if (!opts.silent && state.problem && state.problem !== 'ios-step') hideBanner();
+    state.wantConnected = true;
+    killSocket();
+    var id = ++state.attempt;
+    state.info = { reason: reason, silent: !!opts.silent, results: [] };
+    var ports = portOrder(state.ip);
+    log('Connect (' + reason + ') to ' + state.ip + ': port ' + ports.join(', then '));
+    tryPort(ports, 0, id);
+  }
+
+  function tryPort(ports, i, id) {
+    if (id !== state.attempt) return;
+    if (i >= ports.length) { portsExhausted(id); return; }
+    var port = ports[i], url = socketUrl(state.ip, port), t0 = now(), opened = false, sock;
+    var lnaWaiting = lnaMatters() && state.lna !== 'granted';
+    var limit = lnaWaiting ? CFG.LNA_PROMPT_TIMEOUT_MS : CFG.OPEN_TIMEOUT_MS;
+    setPhase('connecting', port, lnaWaiting);
+    log('Opening ' + url);
+    try { sock = new WebSocket(url); } catch (e) {
+      log('Browser refused it: ' + (e && e.name ? e.name : 'error') + (e && e.message ? ' – ' + e.message : ''));
+      state.info.results.push({ port: port, kind: 'browser' });
+      tryPort(ports, i + 1, id);
+      return;
+    }
+    state.ws = sock;
+    timers.open = setTimeout(function () {
+      if (id !== state.attempt || opened) return;
+      log('No answer on port ' + port + ' within ' + Math.round(limit / 1000) + ' s');
+      state.info.results.push({ port: port, kind: 'timeout', ms: now() - t0 });
+      killSocket();
+      portsExhausted(id);        // the TV itself isn't answering – the other port would only double the wait
+    }, limit);
+    sock.onopen = function () {
+      if (id !== state.attempt) return;
+      opened = true;
+      clearTimeout(timers.open);
+      log('Port ' + port + ' open after ' + (now() - t0) + ' ms – waiting for the TV to accept “' + CFG.APP_NAME + '”');
+      setPhase('waitAllow', port);
+      timers.allowBanner = setTimeout(function () {
+        if (id === state.attempt && state.phase === 'waitAllow' && state.problem !== 'ios-step') showProblem('allow-wait');
+      }, 1200);
+      timers.allow = setTimeout(function () {
+        if (id !== state.attempt || state.phase !== 'waitAllow') return;
+        log('Nobody pressed Allow within ' + Math.round(CFG.ALLOW_TIMEOUT_MS / 1000) + ' s');
+        attemptFailed(id, 'allow-timeout');
+      }, CFG.ALLOW_TIMEOUT_MS);
+    };
+    sock.onmessage = function (ev) { if (id === state.attempt) onTvMessage(ev.data, port, id); };
+    sock.onerror = function () { if (id === state.attempt) log('Socket error on port ' + port); };
+    sock.onclose = function (ev) {
+      if (id !== state.attempt) return;
+      clearTimeout(timers.open);
+      var ms = now() - t0;
+      state.ws = null;
+      if (!opened) {
+        log('Port ' + port + ' failed after ' + ms + ' ms (code ' + ev.code + ')');
+        state.info.results.push({ port: port, kind: ms < CFG.FAST_FAIL_MS ? 'fast' : 'slow', ms: ms });
+        if (ms < CFG.FAST_FAIL_MS) tryPort(ports, i + 1, id); else portsExhausted(id);
+        return;
+      }
+      clearTimeout(timers.allow); clearTimeout(timers.allowBanner);
+      if (state.phase === 'waitAllow') { log('The TV closed the connection before answering (code ' + ev.code + ')'); attemptFailed(id, 'closed-early'); return; }
+      if (state.phase === 'connected') onDropped(ev.code);
+    };
+  }
+
+  function onTvMessage(raw, port, id) {
+    var msg = null, tok;
+    try { msg = JSON.parse(raw); } catch (e) { /* not JSON */ }
+    var ev = msg && msg.event;
+    if (!ev) { log('TV sent: ' + String(raw).slice(0, 120)); return; }
+    if (ev !== 'ms.channel.clientConnect' && ev !== 'ms.channel.clientDisconnect') log('TV: ' + ev);
+    if (ev === 'ms.channel.connect') {
+      if (state.phase !== 'waitAllow') return;
+      tok = msg.data && msg.data.token;
+      if (tok) { store.set('token.' + state.ip, String(tok)); log('Pairing token saved for ' + state.ip); }
+      store.set('port.' + state.ip, String(port));
+      onConnected(port);
+    } else if (ev === 'ms.channel.unauthorized') {
+      attemptFailed(id, 'denied');
+    } else if (ev === 'ms.channel.timeOut') {
+      attemptFailed(id, 'allow-timeout');
+    } else if (ev === 'ms.remote.imeStart') {
+      toast('The TV keyboard is open – tap 123 › Type text');
+    }
+  }
+
+  function onConnected(port) {
+    clearTimeout(timers.allow); clearTimeout(timers.allowBanner);
+    state.everConnected = true;
+    state.retryIndex = 0;
+    state.notice = '';
+    setPhase('connected', port);
+    hideBanner();
+    log('Connected (port ' + port + ')');
+    flushQueue();
+  }
+
+  function onDropped(code) {
+    log('Connection lost (code ' + code + ')');
+    if (!state.wantConnected) { setPhase('idle'); return; }
+    if (document.visibilityState === 'hidden') { setPhase('idle'); log('Will reconnect when the page is visible again'); return; }
+    scheduleReconnect();
+  }
+
+  function scheduleReconnect() {
+    if (state.retryIndex >= CFG.RECONNECT_DELAYS_MS.length) {
+      setPhase('failed'); dropQueue(); showProblem('dropped'); return;
+    }
+    var d = CFG.RECONNECT_DELAYS_MS[state.retryIndex++];
+    setPhase('reconnecting');
+    log('Reconnecting in ' + (d / 1000) + ' s (try ' + state.retryIndex + ' of ' + CFG.RECONNECT_DELAYS_MS.length + ')');
+    clearTimeout(timers.reconnect);
+    timers.reconnect = setTimeout(function () { timers.reconnect = 0; connect('auto-reconnect', { force: true }); }, d);
+  }
+
+  function portsExhausted(id) {
+    if (id !== state.attempt) return;
+    if (!lnaMatters()) { attemptFailed(id, classify(state.info.results)); return; }
+    queryLna(function (st) { state.lna = st; attemptFailed(id, classify(state.info.results)); });
+  }
+
+  function classify(results) {
+    var secure = location.protocol === 'https:', network = false, byBrowser = false, i;
+    for (i = 0; i < results.length; i++) {
+      if (results[i].kind === 'timeout' || results[i].kind === 'slow') network = true;
+      if (results[i].kind === 'browser') byBrowser = true;
+    }
+    if (lnaMatters()) {
+      if (state.lna === 'denied') return 'lna-denied';
+      if (state.lna === 'prompt') return 'lna-prompt';
+    }
+    if (secure && byBrowser) return browser.ios ? 'ios-step' : 'blocked';
+    if (network) return 'unreachable';
+    if (secure && !canUseLna(browser, CFG)) return browser.ios ? 'ios-step' : 'blocked';
+    if (!secure && pageKind === 'public' && canUseLna(browser, CFG)) return 'need-https';
+    return 'unreachable';
+  }
+
+  function attemptFailed(id, code) {
+    if (id !== state.attempt) return;
+    state.attempt++;                       // ignore late events from this attempt
+    killSocket();
+    var info = state.info || {};
+    log('Not connected: ' + code);
+    if (info.reason === 'auto-reconnect' && code !== 'denied' && state.wantConnected) { scheduleReconnect(); return; }
+    setPhase('failed');
+    dropQueue();
+    var reachedTv = code === 'denied' || code === 'allow-timeout' || code === 'closed-early';
+    if (info.silent && state.notice && !reachedTv) { showProblem(state.notice); return; }  // keep the page's own explanation
+    showProblem(code);
+  }
+
+  function disconnect(why) {
+    state.wantConnected = false;
+    state.attempt++;
+    clearTimeout(timers.reconnect);
+    killSocket();
+    state.queue = [];
+    setPhase('idle');
+    log('Disconnected (' + why + ')');
+  }
+
+
+  /* ------------------------------------------------------------------ sending, queue */
+  function sendNow(cmd) {
+    try { state.ws.send(JSON.stringify(cmd.msg)); } catch (e) { log('Send failed: ' + (e && e.message)); return false; }
+    log('→ ' + cmd.label);
+    if (cmd.app && CFG.APP_REST_FALLBACK && location.protocol === 'http:' && window.fetch) {
+      try {
+        fetch('http://' + state.ip + ':8001/api/v2/applications/' + encodeURIComponent(cmd.app.id), { method: 'POST', mode: 'no-cors', cache: 'no-store' })
+          .then(function () { log('REST open-app request sent (' + cmd.app.name + ')'); },
+            function () { log('REST open-app request failed (' + cmd.app.name + ') – normal on some TVs'); });
+      } catch (e) { /* ignore */ }
+    }
+    return true;
+  }
+
+  function sendCommand(cmd, opts) {
+    opts = opts || {};
+    if (isConnected()) return sendNow(cmd);
+    if (opts.repeat) return false;                       // auto-repeat is never queued
+    if (state.queue.length >= CFG.QUEUE_MAX) {
+      log('Queue full – not kept: ' + cmd.label);
+      toast('Still connecting – wait a moment');
+    } else {
+      cmd.at = now();
+      state.queue.push(cmd);
+      log('Queued ' + cmd.label + ' (' + state.queue.length + '/' + CFG.QUEUE_MAX + ')');
+    }
+    updateStatus();
+    if (state.phase === 'idle' || state.phase === 'failed') connect('key pressed while disconnected', { force: true });
+    else if (state.phase === 'reconnecting') connect('key pressed while reconnecting', { force: true });
+    return false;
+  }
+
+  function flushQueue() {
+    if (!state.queue.length) return;
+    var items = state.queue.splice(0, state.queue.length), cutoff = now() - CFG.QUEUE_MAX_AGE_MS;
+    items = items.filter(function (c) { return c.at >= cutoff; });
+    updateStatus();
+    if (!items.length) return;
+    log('Sending ' + items.length + ' queued command(s)');
+    var i = 0;
+    (function next() {
+      if (i >= items.length) return;
+      if (!isConnected()) { state.queue = items.slice(i).concat(state.queue).slice(0, CFG.QUEUE_MAX); updateStatus(); return; }
+      sendNow(items[i++]);
+      if (i < items.length) setTimeout(next, CFG.QUEUE_GAP_MS);
+    })();
+  }
+
+  function dropQueue() {
+    if (!state.queue.length) return;
+    var n = state.queue.length;
+    state.queue = [];
+    log(n + ' queued key press(es) not sent');
+    toast(n === 1 ? '1 key press was not sent' : n + ' key presses were not sent');
+    updateStatus();
+  }
+
+
+  /* ------------------------------------------------------------------ buttons */
+  function buzz() {
+    try {
+      if (navigator.vibrate) { navigator.vibrate(12); return; }
+      if (hapticLabel) hapticLabel.click();        // iPhone (Safari 17.4+): switch-checkbox haptic
+    } catch (e) { /* ignore */ }
+  }
+  function setupIosHaptic() {
+    if (!browser.ios || navigator.vibrate) return;
+    var input = document.createElement('input');
+    input.type = 'checkbox';
+    input.setAttribute('switch', '');
+    if (!('switch' in input)) return;
+    input.tabIndex = -1;
+    hapticLabel = el('label', { class: 'haptic', 'aria-hidden': 'true' }, [input]);
+    document.body.appendChild(hapticLabel);
+  }
+
+  function pressPower() {
+    var btn = $('btnPower');
+    if (CFG.POWER_CONFIRM_MS > 0 && now() > powerArmedUntil) {
+      powerArmedUntil = now() + CFG.POWER_CONFIRM_MS;
+      btn.className = btn.className.replace(/\s*armed/g, '') + ' armed';
+      toast('Tap Power again to switch the TV off. A phone can’t switch it back on.');
+      clearTimeout(timers.power);
+      timers.power = setTimeout(function () { btn.className = btn.className.replace(/\s*armed/g, ''); }, CFG.POWER_CONFIRM_MS);
+      return;
+    }
+    powerArmedUntil = 0;
+    clearTimeout(timers.power);
+    btn.className = btn.className.replace(/\s*armed/g, '');
+    sendCommand(keyCmd('KEY_POWER'));
+  }
+
+  function press(key) {
+    buzz();
+    if (key === 'KEY_POWER') { pressPower(); return; }
+    if (key === 'KEY_PLAY') ppNext = 'KEY_PAUSE';
+    else if (key === 'KEY_PAUSE') ppNext = 'KEY_PLAY';
+    sendCommand(keyCmd(key));
+  }
+
+  function bindKeyButton(btn) {
+    var key = btn.getAttribute('data-key');
+    if (!btn.hasAttribute('data-repeat')) {
+      btn.addEventListener('click', function () { press(key); });
+      return;
+    }
+    var delay = 0, interval = 0, pointerUsed = false, resetFlag = 0;
+    function stop() {
+      clearTimeout(delay); clearInterval(interval); delay = interval = 0;
+      btn.className = btn.className.replace(/\s*pressed/g, '');
+      clearTimeout(resetFlag);
+      resetFlag = setTimeout(function () { pointerUsed = false; }, 600);
+    }
+    function start(e) {
+      if (e.type !== 'touchstart' && typeof e.button === 'number' && e.button !== 0) return;
+      if (e.type === 'touchstart') e.preventDefault();             // no extra mouse events afterwards
+      if (e.pointerId !== undefined && btn.setPointerCapture) { try { btn.setPointerCapture(e.pointerId); } catch (x) { /* ignore */ } }
+      stop();
+      pointerUsed = true;
+      clearTimeout(resetFlag);
+      btn.className += ' pressed';
+      press(key);
+      delay = setTimeout(function () {
+        interval = setInterval(function () { if (!sendCommand(keyCmd(key), { repeat: true })) stop(); }, CFG.REPEAT_INTERVAL_MS);
+      }, CFG.REPEAT_DELAY_MS);
+    }
+    if (window.PointerEvent) {
+      btn.addEventListener('pointerdown', start);
+      btn.addEventListener('pointerup', stop);
+      btn.addEventListener('pointercancel', stop);
+      btn.addEventListener('lostpointercapture', stop);
+    } else {
+      btn.addEventListener('touchstart', start, { passive: false });
+      btn.addEventListener('touchend', stop);
+      btn.addEventListener('touchcancel', stop);
+      btn.addEventListener('mousedown', start);
+      btn.addEventListener('mouseup', stop);
+      btn.addEventListener('mouseleave', stop);
+    }
+    // Keyboard activation (Enter / Space on a focused button) arrives as a click without a pointer press.
+    btn.addEventListener('click', function () {
+      if (pointerUsed) { pointerUsed = false; return; }
+      press(key);
+    });
+  }
+
+  function flashKey(key) {
+    var b = document.querySelector('#remote [data-key="' + key + '"]');
+    if (!b) return;
+    b.className += ' pressed';
+    setTimeout(function () { b.className = b.className.replace(/\s*pressed/g, ''); }, 140);
+  }
+
+
+  /* ------------------------------------------------------------------ sheets */
+  function focusables(root) {
+    return Array.prototype.filter.call(root.querySelectorAll('button, a[href], input, summary, pre[tabindex]'), function (n) {
+      return !n.disabled && n.offsetParent !== null;
+    });
+  }
+  function openSheet(id) {
+    if (openSheetEl) closeSheet();
+    var s = $(id);
+    if (!s) return;
+    lastFocus = document.activeElement;
+    s.hidden = false;
+    openSheetEl = s;
+    document.body.className = (document.body.className + ' modal-open').replace(/^\s+/, '');
+    if (id === 'settings') { $('ipInput').value = state.ip; renderLog(); updateStatus(); }
+    var f = s.querySelector('[data-close]');
+    setTimeout(function () { try { if (f) f.focus(); } catch (e) { /* ignore */ } }, 30);
+  }
+  function closeSheet() {
+    if (!openSheetEl) return false;
+    openSheetEl.hidden = true;
+    openSheetEl = null;
+    document.body.className = document.body.className.replace(/\s*modal-open/g, '');
+    try { if (lastFocus && lastFocus.focus) lastFocus.focus(); } catch (e) { /* ignore */ }
+    return true;
+  }
+
+
+  /* ------------------------------------------------------------------ settings actions */
+  function trustCertificate() {
+    var url = 'https://' + state.ip + ':8002/api/v2/';
+    log('Opening ' + url + ' so the TV certificate can be accepted');
+    toast('Choose Advanced › Proceed, then come back and tap Connect. (Not possible on iPhone.)');
+    window.open(url, '_blank', 'noopener');
+  }
+
+  function testReachability() {
+    var out = $('reachResult'), ip = state.ip, url = 'http://' + ip + ':8001/api/v2/';
+    function report(text, good) { out.textContent = text; out.className = 'hint ' + (good ? 'msg-ok' : 'msg-err'); log('Reachability: ' + text); }
+    if (!isValidTvAddress(ip)) { report('The TV address is not valid.', false); return; }
+    if (!window.fetch) { report('This browser cannot run the test. Try “Open TV info page”.', false); return; }
+    if (location.protocol === 'https:' && !canUseLna(browser, CFG)) {
+      report('This browser blocks tests from a secure page. Use “Open TV info page”: if it shows text with “remote_available”, the TV is reachable.', false);
+      return;
+    }
+    out.textContent = 'Testing ' + url + ' …'; out.className = 'hint';
+    var t0 = now(), done = false, ctrl = window.AbortController ? new AbortController() : null;
+    var timer = setTimeout(function () {
+      if (done) return; done = true;
+      try { if (ctrl) ctrl.abort(); } catch (e) { /* ignore */ }
+      report('No answer from ' + ip + ' within ' + Math.round(CFG.REACH_TIMEOUT_MS / 1000) + ' s. The TV may be off, the address wrong, or this phone on another network (guest Wi-Fi or mobile data).', false);
+    }, CFG.REACH_TIMEOUT_MS);
+    var opts = { mode: 'no-cors', cache: 'no-store' };
+    if (ctrl) opts.signal = ctrl.signal;
+    fetch(url, opts).then(function () {
+      if (done) return; done = true; clearTimeout(timer);
+      report('The TV answered in ' + (now() - t0) + ' ms – the network path is fine.', true);
+    }, function () {
+      if (done) return; done = true; clearTimeout(timer);
+      var ms = now() - t0;
+      report((ms < 400 ? 'The test was refused after ' + ms + ' ms – by the browser or the TV. ' : 'No answer from the TV (' + ms + ' ms). ') +
+        'Try “Open TV info page” as a second check.', false);
+    });
+  }
+
+  function saveIp(value) {
+    var v = String(value || '').replace(/\s+/g, '');
+    var hint = $('ipHint');
+    if (!isValidTvAddress(v)) { hint.textContent = 'That doesn’t look like an address. Example: ' + CFG.DEFAULT_IP; hint.className = 'hint msg-err'; return false; }
+    hint.textContent = 'Saved. A link can also set it: add ?ip=' + v + ' to the address.'; hint.className = 'hint msg-ok';
+    if (v === state.ip) return true;
+    var was = state.phase !== 'idle' && state.phase !== 'failed';
+    disconnect('TV address changed');
+    state.ip = v;
+    store.set('ip', v);
+    log('TV address set to ' + v);
+    if (was || state.everConnected) connect('new TV address', { force: true });
+    return true;
+  }
+
+
+  /* ------------------------------------------------------------------ keyboard shortcuts (laptops) */
+  var KEYMAP = {
+    ArrowUp: 'KEY_UP', ArrowDown: 'KEY_DOWN', ArrowLeft: 'KEY_LEFT', ArrowRight: 'KEY_RIGHT',
+    Up: 'KEY_UP', Down: 'KEY_DOWN', Left: 'KEY_LEFT', Right: 'KEY_RIGHT',
+    Enter: 'KEY_ENTER', Backspace: 'KEY_RETURN', Escape: 'KEY_EXIT', Esc: 'KEY_EXIT',
+    '+': 'KEY_VOLUP', '=': 'KEY_VOLUP', '-': 'KEY_VOLDOWN', '_': 'KEY_VOLDOWN',
+    m: 'KEY_MUTE', h: 'KEY_HOME', p: 'KEY_POWER', s: 'KEY_SOURCE', PageUp: 'KEY_CHUP', PageDown: 'KEY_CHDOWN',
+    '0': 'KEY_0', '1': 'KEY_1', '2': 'KEY_2', '3': 'KEY_3', '4': 'KEY_4', '5': 'KEY_5', '6': 'KEY_6', '7': 'KEY_7', '8': 'KEY_8', '9': 'KEY_9'
+  };
+  var REPEATABLE = /^KEY_(UP|DOWN|LEFT|RIGHT|VOLUP|VOLDOWN|CHUP|CHDOWN)$/;
+
+  function onKeyDown(e) {
+    var t = e.target, tag = t && t.tagName ? t.tagName : '', k = e.key, key, list, first, last;
+    if (openSheetEl) {
+      if (k === 'Escape' || k === 'Esc') { e.preventDefault(); closeSheet(); return; }
+      if (k === 'Tab') {                                   // keep focus inside the open sheet
+        list = focusables(openSheetEl); if (!list.length) return;
+        first = list[0]; last = list[list.length - 1];
+        if (e.shiftKey && document.activeElement === first) { e.preventDefault(); last.focus(); }
+        else if (!e.shiftKey && document.activeElement === last) { e.preventDefault(); first.focus(); }
+      }
+      return;
+    }
+    if (e.defaultPrevented || e.ctrlKey || e.metaKey || e.altKey) return;
+    if (tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || (t && t.isContentEditable)) return;
+    if ((k === 'Enter' || k === ' ') && (tag === 'BUTTON' || tag === 'A' || tag === 'SUMMARY')) return;  // let the focused control work
+    if (k && k.length === 1) k = k.toLowerCase();
+    key = KEYMAP[k];
+    if (!key) return;
+    e.preventDefault();
+    if (e.repeat && !REPEATABLE.test(key)) return;
+    if (key === 'KEY_POWER') { pressPower(); flashKey(key); return; }
+    if (e.repeat) sendCommand(keyCmd(key), { repeat: true });
+    else press(key);
+    flashKey(key);
+  }
+
+
+  /* ------------------------------------------------------------------ wake-up / reconnect */
+  function onVisible(why) {
+    if (!state.everConnected || !state.wantConnected) return;
+    var away = state.hiddenAt ? now() - state.hiddenAt : 0;
+    state.hiddenAt = 0;
+    if (isConnected() && away < CFG.STALE_AFTER_HIDDEN_MS) return;
+    if (isConnected()) {
+      // After a long sleep the socket may look open but be dead (phones suspend background pages): replace it.
+      log('Back after ' + Math.round(away / 1000) + ' s – opening a fresh connection');
+      state.attempt++;
+      killSocket();
+      setPhase('idle');
+    } else {
+      log('Page visible again (' + why + ') – reconnecting');
+    }
+    state.retryIndex = 0;
+    connect('phone woke up', { force: true });
+  }
+
+
+  /* ------------------------------------------------------------------ start-up */
+  function cleanUrl() {
+    var q = parseQuery(location.search), keep = [], k;
+    if (!('tw' in q) || !window.history || !history.replaceState) return;
+    for (k in q) if (k !== 'tw') keep.push(encodeURIComponent(k) + '=' + encodeURIComponent(q[k]));
+    try { history.replaceState(null, '', location.pathname + (keep.length ? '?' + keep.join('&') : '') + location.hash); } catch (e) { /* ignore */ }
+  }
+
+  function initIp() {
+    var q = parseQuery(location.search), saved;
+    if (q.ip && isValidTvAddress(q.ip)) { state.ip = q.ip; store.set('ip', q.ip); log('TV address from the link: ' + q.ip); return; }
+    if (q.ip) log('Ignored an invalid ?ip= value');
+    saved = store.get('ip');
+    state.ip = saved && isValidTvAddress(saved) ? saved : CFG.DEFAULT_IP;
+  }
+
+  function registerServiceWorker() {
+    if (location.protocol !== 'https:' || !('serviceWorker' in navigator)) return;
+    try {
+      navigator.serviceWorker.register('sw.js?v=' + encodeURIComponent(CFG.VERSION)).then(
+        function () { log('Offline cache ready'); },
+        function (e) { log('Offline cache not available: ' + (e && e.message)); });
+    } catch (e) { /* ignore */ }
+  }
+
+  function bindUi() {
+    Array.prototype.forEach.call(document.querySelectorAll('[data-key]'), bindKeyButton);
+    $('btnPlayPause').addEventListener('click', function () { var k = ppNext; ppNext = k === 'KEY_PAUSE' ? 'KEY_PLAY' : 'KEY_PAUSE'; buzz(); sendCommand(keyCmd(k)); });
+    $('btn123').addEventListener('click', function () { buzz(); openSheet('more'); });
+    $('btnSettings').addEventListener('click', function () { openSheet('settings'); });
+    $('lnkAbout').addEventListener('click', function () {
+      openSheet('settings');
+      setTimeout(function () { try { $('about').scrollIntoView(); } catch (e) { /* ignore */ } }, 60);
+    });
+    $('pill').addEventListener('click', function () {
+      if (state.phase === 'idle' || state.phase === 'failed') { state.retryIndex = 0; connect('status pill', { force: true }); }
+      else openSheet('settings');
+    });
+    Array.prototype.forEach.call(document.querySelectorAll('[data-close]'), function (b) { b.addEventListener('click', closeSheet); });
+    Array.prototype.forEach.call(document.querySelectorAll('.sheet'), function (s) {
+      s.addEventListener('click', function (e) { if (e.target === s) closeSheet(); });
+    });
+    $('remote').addEventListener('contextmenu', function (e) { e.preventDefault(); });
+
+    var apps = $('apps');
+    CFG.APPS.forEach(function (app) {
+      apps.appendChild(el('button', { type: 'button', class: 'key small', 'aria-label': 'Open ' + app.name, text: app.name,
+        onclick: function () { buzz(); sendCommand(appCmd(app)); } }));
+    });
+
+    $('textForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      var input = $('txt'), v = input.value;
+      if (!v) { toast('Type something first'); return; }
+      var sent = sendCommand(textCmd(v));
+      toast(sent ? 'Text sent to the TV' : 'Text will be sent once connected');
+      try { input.select(); } catch (x) { /* ignore */ }
+    });
+
+    $('ipForm').addEventListener('submit', function (e) { e.preventDefault(); saveIp($('ipInput').value); });
+    $('sConnect').addEventListener('click', function () { state.retryIndex = 0; connect('Settings › Connect', { force: true }); });
+    $('sDisconnect').addEventListener('click', function () { disconnect('Settings › Disconnect'); toast('Disconnected'); });
+    $('sForget').addEventListener('click', function () {
+      store.del('token.' + state.ip); store.del('port.' + state.ip);
+      disconnect('Forget pairing');
+      log('Pairing forgotten for ' + state.ip);
+      toast('Pairing forgotten. The TV keeps its own list: Device Connection Manager › Device List.');
+    });
+    $('sReach').addEventListener('click', testReachability);
+    $('sTrust').addEventListener('click', trustCertificate);
+    $('sInfo').addEventListener('click', function () { log('Opening the TV info page'); window.open('http://' + state.ip + ':8001/api/v2/', '_blank', 'noopener'); });
+    $('sCopy').addEventListener('click', function () {
+      copyText(logText()).then(function (ok) { toast(ok ? 'Log copied' : 'Copy failed – select the log text and copy it'); });
+    });
+
+    document.addEventListener('keydown', onKeyDown);
+    document.addEventListener('visibilitychange', function () {
+      if (document.visibilityState === 'hidden') { state.hiddenAt = now(); return; }
+      onVisible('visibilitychange');
+    });
+    window.addEventListener('pageshow', function (e) { if (e.persisted) onVisible('back/forward cache'); });
+    window.addEventListener('online', function () { if (state.everConnected && state.wantConnected && !isConnected()) connect('network back', { force: true }); });
+
+    $('footVer').textContent = CFG.VERSION;
+    $('aboutVer').textContent = CFG.VERSION;
+    $('aboutName').textContent = CFG.CONTACT_NAME;
+    $('aboutTel').textContent = CFG.CONTACT_PHONE;
+    $('aboutTel').setAttribute('href', 'tel:' + CFG.CONTACT_TEL);
+  }
+
+  function startConnecting() {
+    if (!('WebSocket' in window)) { showProblem('no-websocket'); return; }
+    if (state.notice === 'ios-step') { setPhase('failed'); showProblem('ios-step'); return; }   // shown at once, no waiting
+    if (state.notice) { showProblem(state.notice); connect('page opened (quiet check)', { silent: true }); return; }
+    if (lnaMatters()) {
+      queryLna(function (st) {
+        state.lna = st;
+        log('Local network permission: ' + st);
+        if (st === 'granted') connect('page opened');
+        else if (st === 'denied') { setPhase('failed'); showProblem('lna-denied'); }
+        else { setPhase('idle'); showProblem('lna-prompt'); }   // the prompt must come from a tap
+      });
+      return;
+    }
+    connect('page opened');
+  }
+
+  // ---- go
+  if (route.action === 'redirect') {
+    showProblem('redirect');
+    $('banner').appendChild(el('p', { class: 'hint' }, ['If nothing happens, ', el('a', { href: route.url, text: 'tap here' }), '.']));
+    goTo(route.url);
+    return;                                // nothing else runs on a page that is being left
+  }
+
+  cleanUrl();
+  initIp();
+  bindUi();
+  setupIosHaptic();
+  setPhase('idle');
+  log('Remote v' + CFG.VERSION + ' started – ' + route.why);
+  registerServiceWorker();
+  startConnecting();
+
+  // Small read-only hook for diagnostics and the automated tests.
+  window.TVRemote = {
+    version: CFG.VERSION,
+    route: route,
+    browser: browser,
+    status: function () {
+      return { phase: state.phase, port: state.port, ip: state.ip, queue: state.queue.length, lna: state.lna,
+        notice: state.notice, problem: state.problem, everConnected: state.everConnected };
+    },
+    log: logText
+  };
+})();
+</script>
+</body>
+</html>
